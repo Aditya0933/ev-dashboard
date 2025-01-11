@@ -36,8 +36,8 @@ app.get('/data', (req, res) => {
   let startIndex = (page - 1) * limit;
   let endIndex = page * limit;
 
-  // Read the CSV file and parse the data
-  fs.createReadStream('D:\\Project\\React_EV_Dashboard\\Electric_Vehicle_Population_Data.csv')
+  // Use the relative path to the CSV file
+  fs.createReadStream('./data/Electric_Vehicle_Population_Data.csv')
     .pipe(csv())
     .on('data', (data) => results.push(data))
     .on('end', () => {
