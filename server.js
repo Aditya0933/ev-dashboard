@@ -33,8 +33,13 @@ app.get('/data', (req, res) => {
   const results = [];
   const page = parseInt(req.query.page) || 1; // Default to page 1 if no query parameter
   const limit = parseInt(req.query.limit) || 10; // Default to 10 results per page
-  let startIndex = (page - 1) * limit;
-  let endIndex = page * limit;
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+
+  // Handle invalid page and limit
+  if (page < 1 || limit < 1) {
+    return res.status(400).json({ error: 'Page and limit must be positive numbers' });
+  }
 
   // Use the relative path to the CSV file
   fs.createReadStream('./data/Electric_Vehicle_Population_Data.csv')
@@ -43,6 +48,11 @@ app.get('/data', (req, res) => {
     .on('end', () => {
       // Cache the data after it's read
       cachedData = results;
+
+      // Handle case when startIndex exceeds results length (invalid page)
+      if (startIndex >= results.length) {
+        return res.status(400).json({ error: 'Page number exceeds available data' });
+      }
 
       // Paginate the data
       const paginatedResults = results.slice(startIndex, endIndex);
