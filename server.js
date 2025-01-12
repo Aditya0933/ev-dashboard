@@ -21,16 +21,7 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Cache the data once it's read from the CSV file
-let cachedData = null;
-
 app.get('/data', (req, res) => {
-  // If data is cached, return the cached data
-  if (cachedData) {
-    return res.json(cachedData);
-  }
-
-  const results = [];
   const page = parseInt(req.query.page) || 1; // Default to page 1 if no query parameter
   const limit = parseInt(req.query.limit) || 10; // Default to 10 results per page
   const startIndex = (page - 1) * limit;
@@ -42,25 +33,31 @@ app.get('/data', (req, res) => {
   }
 
   // Use the relative path to the CSV file
+  const results = [];
+  let currentIndex = 0;
+
+  // Read the CSV file
   fs.createReadStream('./data/Electric_Vehicle_Population_Data.csv')
     .pipe(csv())
-    .on('data', (data) => results.push(data))
+    .on('data', (data) => {
+      if (currentIndex >= startIndex && currentIndex < endIndex) {
+        results.push(data); // Only push data for the current page
+      }
+      currentIndex++;
+    })
     .on('end', () => {
-      // Cache the data after it's read
-      cachedData = results;
+      const totalRecords = currentIndex; // The total number of records in the CSV file
+      const totalPages = Math.ceil(totalRecords / limit); // Calculate total pages
 
       // Handle case when startIndex exceeds results length (invalid page)
-      if (startIndex >= results.length) {
+      if (startIndex >= totalRecords) {
         return res.status(400).json({ error: 'Page number exceeds available data' });
       }
 
-      // Paginate the data
-      const paginatedResults = results.slice(startIndex, endIndex);
-
       // Send the paginated results and total pages back as JSON
       res.json({
-        data: paginatedResults,
-        totalPages: Math.ceil(results.length / limit),
+        data: results,
+        totalPages: totalPages,
       });
     })
     .on('error', (err) => {
