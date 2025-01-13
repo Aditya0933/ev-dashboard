@@ -4,33 +4,25 @@ const csv = require('csv-parser');
 
 const router = express.Router();
 
-// Route to get data by year
-router.get('/data/by-year', (req, res) => {
-  const year = req.query.year;
+router.get('/', (req, res) => {
+  const page = parseInt(req.query.page) || 1; // Default to page 1
+  const limit = parseInt(req.query.limit) || 10; // Default to 10 results per page
+  const startIndex = (page - 1) * limit;
+  const results = [];
+  let currentIndex = 0;
 
-  // Check if the year query parameter is provided
-  if (!year) {
-    return res.status(400).json({ error: 'Year query parameter is required' });
-  }
-
-  const results = { BEV: 0, PHEV: 0 };
-
-  // Read and parse the CSV file
+  // Read CSV file
   fs.createReadStream('./data/Electric_Vehicle_Population_Data.csv')
     .pipe(csv())
     .on('data', (data) => {
-      // Process data for the given year
-      if (data['Model Year'] === year) {
-        if (data['Electric Vehicle Type'] === 'Battery Electric Vehicle (BEV)') {
-          results.BEV++;
-        } else if (data['Electric Vehicle Type'] === 'Plug-in Hybrid Electric Vehicle (PHEV)') {
-          results.PHEV++;
-        }
+      if (currentIndex >= startIndex && currentIndex < startIndex + limit) {
+        results.push(data); // Add data within range
       }
+      currentIndex++;
     })
     .on('end', () => {
-      // Return results
-      res.json(results);
+      const totalPages = Math.ceil(currentIndex / limit); // Total pages
+      res.json({ data: results, totalPages });
     })
     .on('error', (err) => {
       console.error('Error reading CSV file:', err);
