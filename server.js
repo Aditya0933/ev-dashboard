@@ -8,6 +8,7 @@ const scatterPlotRoutes = require('./routes/scatterPlotRoutes'); // Scatter Plot
 const pieChartRoutes = require('./routes/pieChartRoutes'); // Pie Chart route
 const lineChartRoutes = require('./routes/lineChartRoutes'); // Line Chart route
 const stackedBarChartRoutes = require('./routes/stackedBarChartRoutes'); // Stacked Bar Chart route
+const filterByYearRoutes = require('./routes/filterRoutes'); // Stacked Bar Chart route
 
 const app = express();
 const PORT = 3001;
@@ -30,6 +31,7 @@ app.use(scatterPlotRoutes);
 app.use(pieChartRoutes);
 app.use(lineChartRoutes);
 app.use(stackedBarChartRoutes);
+app.use(filterByYearRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
